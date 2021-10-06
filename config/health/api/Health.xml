@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/health" name="Health" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET" protocol="http" uri-template="/doctor/hospital/{hospitalId}">
+        <inSequence>
+            <log>
+                <property name="**** [API]" value="IN - /doctor/hospital/{hospitalId}"/>
+            </log>
+            <log category="DEBUG">
+                <property expression="get-property('uri.var.hospitalId')" name="hospitalId"/>
+            </log>
+            <call>
+                <endpoint>
+                    <http method="get" uri-template="http://hospital:8080/hospital/{uri.var.hospitalId}">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>1</progressionFactor>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+            <log category="DEBUG">
+                <property expression="$body" name="hospital_response"/>
+            </log>
+            <filter regex="200" source="get-property('axis2', 'HTTP_SC')">
+                <then>
+                    <property expression="json-eval($.id)" name="id" scope="default" type="STRING"/>
+                    <property expression="json-eval($.name)" name="name" scope="default" type="STRING"/>
+                    <property expression="json-eval($.address)" name="address" scope="default" type="STRING"/>
+                    <property expression="json-eval($.postalCode)" name="postalCode" scope="default" type="STRING"/>
+                    <property expression="json-eval($.city)" name="city" scope="default" type="STRING"/>
+                    <send>
+                        <endpoint>
+                            <http method="get" uri-template="http://doctor:8081/doctor/hospital/{uri.var.hospitalId}">
+                                <suspendOnFailure>
+                                    <initialDuration>-1</initialDuration>
+                                    <progressionFactor>1</progressionFactor>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </send>
+                </then>
+                <else>
+                    <log category="DEBUG">
+                        <property name="switchlog" value="Case: hospital call unsuccessful"/>
+                    </log>
+                    <respond/>
+                </else>
+            </filter>
+        </inSequence>
+        <outSequence>
+            <log category="DEBUG">
+                <property expression="$body" name="doctor_response"/>
+            </log>
+            <enrich>
+                <source clone="true" type="body"/>
+                <target property="DOCTOR_REQUEST_PAYLOAD" type="property"/>
+            </enrich>
+            <payloadFactory media-type="json">
+                <format>{"id":"$1","name":"$2","address":"$3","postalCode":"$4","city":"$5","doctors":$6}</format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:id"/>
+                    <arg evaluator="xml" expression="$ctx:name"/>
+                    <arg evaluator="xml" expression="$ctx:address"/>
+                    <arg evaluator="xml" expression="$ctx:postalCode"/>
+                    <arg evaluator="xml" expression="$ctx:city"/>
+                    <arg evaluator="xml" expression="$ctx:DOCTOR_REQUEST_PAYLOAD"/>
+                </args>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <log>
+                <property name="**** [API]" value="OUT - /doctor/hospital/{hospitalId}"/>
+            </log>
+            <send/>
+        </outSequence>
+        <faultSequence/>
+    </resource>
+</api>

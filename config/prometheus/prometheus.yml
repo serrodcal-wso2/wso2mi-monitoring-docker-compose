@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "esb_stats"
+    metrics_path: "metric-service/metrics"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['health:9201']
+  - job_name: "exporter"
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+        - exporter:5556
+    

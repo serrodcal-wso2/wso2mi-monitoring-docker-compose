@@ -1,0 +1,5 @@
+hostPort: health:9010
+username:
+password:
+rules:
+- pattern: ".*"
