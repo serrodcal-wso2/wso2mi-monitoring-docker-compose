@@ -28,9 +28,11 @@ stat.tracer.collect_mediation_properties= true
 
 [opentracing]
 enable = true
-logs = true
-manager_host = "jaeger"
-agent_host = "jaeger"
+jaeger.sampler.manager_host="jaeger"
+# jaeger.sampler.manager_port="5778"
+jaeger.sender.agent_host="jaeger"
+# jaeger.sender.agent_port="6831"
+jaeger.reporter.log_spans=false
 
 ## Following are set of example configs. Please refer docs for complete set of configurations.
 

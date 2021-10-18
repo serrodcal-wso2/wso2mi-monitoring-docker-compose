@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<api context="/health" name="Health" xmlns="http://ws.apache.org/ns/synapse">
+<api context="/health" name="Health" statistics="enable" trace="enable" xmlns="http://ws.apache.org/ns/synapse">
     <resource methods="GET" protocol="http" uri-template="/doctor/hospital/{hospitalId}">
         <inSequence>
             <log>

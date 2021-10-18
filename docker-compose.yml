@@ -7,16 +7,19 @@ services:
 
   jaeger:
     container_name: jaeger
-    image: jaegertracing/all-in-one:1.26.0
+    image: jaegertracing/all-in-one:1.27.0
+    environment:
+      - QUERY_BASE_PATH=/jaeger
     ports:
-       - "6831:6831/udp"
-       - "14268:14268"
-       - "16686:16686"
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "14250:14250"
+      - "14268:14268"
+      - "16686:16686"
     networks:
       - local
-    # depends_on:
-    #   - doctor
-    #   - hospital
 
   # Quarkus application
   hospital:
@@ -43,6 +46,7 @@ services:
       - jaeger
 
   # Micro integrator application
+  # Full deployment.toml file: https://github.com/wso2/micro-integrator/blob/8025a5c2133560c258ddade214313e79bb7ae1cd/distribution/src/resources/config-tool/deployment-full.toml
   # Enabling Prometheus: https://apim.docs.wso2.com/en/latest/observe/micro-integrator/setting-up-cloud-native-observability-in-kubernetes/#enabling-observability-for-the-micro-integrator
   # Enabling Tracing: https://apim.docs.wso2.com/en/latest/observe/micro-integrator/setting-up-cloud-native-observability-in-kubernetes/#configuring-the-micro-integrator-to-publish-tracing-information
   # Viewing Statistics: https://apim.docs.wso2.com/en/latest/observe/micro-integrator/viewing-cloud-native-observability-statistics/
@@ -51,7 +55,6 @@ services:
     image: wso2/wso2mi:4.0.0
     environment:
       - JAVA_OPTS=-DenablePrometheusApi=true -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.rmi.port=9010 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
-      # -Djava.rmi.server.hostname=0.0.0.0
     volumes:
       - ./config/health/api/Health.xml:/home/wso2carbon/wso2mi-4.0.0/repository/deployment/server/synapse-configs/default/api/Health.xml
       - ./config/health/deployment.toml:/home/wso2carbon/wso2mi-4.0.0/conf/deployment.toml
@@ -62,7 +65,7 @@ services:
     networks:
       - local
     depends_on:
-      - jaeger # Jaeger has to start before Micro Integrator
+      - jaeger
       - doctor
       - hospital
 
@@ -116,9 +119,6 @@ services:
       - GF_AUTH_BASIC_ENABLED=false
     volumes:
       - ./config/grafana/dashboard.json:/var/lib/grafana/dashboards/dashboard.json
-      - ./config/grafana/wso2-integration-cluster-metrics_rev1.json:/var/lib/grafana/dashboards/wso2-integration-cluster-metrics_rev1.json
-      - ./config/grafana/wso2-integration-node-metrics_rev1.json:/var/lib/grafana/dashboards/wso2-integration-node-metrics_rev1.json
-      - ./config/grafana/wso2-api-metrics_rev2.json:/var/lib/grafana/dashboards/wso2-api-metrics_rev2.json
       - ./config/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
       - ./config/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
     networks:
